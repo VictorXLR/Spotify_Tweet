@@ -1,0 +1,4 @@
+.env
+authData.py
+__pycache__
+token.cred
