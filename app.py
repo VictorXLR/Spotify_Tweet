@@ -9,7 +9,6 @@ from functions import (
     SPOTIFY_CLIENT_ID,
     SPOTIFY_REDIRECT_URI,
     SPOTIFY_SECRET_CLIENT_ID,
-    TOKEN_PICKLED,
     get_last_tweet,
     send_tweet,
 )
@@ -24,6 +23,9 @@ I am listening to {} by {}
 
 {}"""
 
+# This lines dump the credentials to a file called token.cred in order for the 
+# refeshing token to work anytime its run. Basically, if the file exists the app
+# will not ask for you to login. 
 if os.path.exists("./token.cred"):
     with open("token.cred", "rb") as dump:
         token = pickle.load(dump)
@@ -33,6 +35,8 @@ else:
         pickle.dump(token, file, pickle.HIGHEST_PROTOCOL)
 
 
+# function to modify time interval for check operation, right now its 
+# 180 seconds, but depending on your usecase, can be modified. 
 def countdown(t=TIME_INTERVAL) -> None:
     while t:
         mins, secs = divmod(t, 60)
@@ -42,7 +46,8 @@ def countdown(t=TIME_INTERVAL) -> None:
         t -= 1
     return
 
-
+# Takes data from spotify API and uses it to compose a string to be tweeted out
+# could have added other functionality but it works fine for now. 
 def generate_tweet() -> str:
     trk_artists = ""
     try:
@@ -67,6 +72,8 @@ def generate_tweet() -> str:
         print("No Song Playing")
 
 
+# Runs forever :), can operate on a headless server on a tmux instance and 
+# provides enough checking to carry itself.
 if __name__ == "__main__":
     message = generate_tweet()
     send_tweet(message)
