@@ -1,5 +1,4 @@
 import os
-import pickle
 from time import sleep
 
 import tekore as tk
@@ -13,9 +12,10 @@ from functions import (
     send_tweet,
 )
 
+File = "token.cfg"
 token = None
 TIME_INTERVAL = 180
-configuration = (SPOTIFY_CLIENT_ID, SPOTIFY_SECRET_CLIENT_ID, SPOTIFY_REDIRECT_URI)
+conf = (SPOTIFY_CLIENT_ID, SPOTIFY_SECRET_CLIENT_ID, SPOTIFY_REDIRECT_URI)
 
 
 twt_msg = """
@@ -23,20 +23,19 @@ I am listening to {} by {}
 
 {}"""
 
-# This lines dump the credentials to a file called token.cred in order for the 
+# This lines dump the credentials to a file called token.cred in order for the
 # refeshing token to work anytime its run. Basically, if the file exists the app
-# will not ask for you to login. 
-if os.path.exists("./token.cred"):
-    with open("token.cred", "rb") as dump:
-        token = pickle.load(dump)
+# will not ask for you to login.
+if os.path.exists(File):
+    conf = tk.config_from_file(File, return_refresh=True)
+    token = tk.refresh_user_token(*conf[:2], conf[3])
 else:
-    token = tk.prompt_for_user_token(*configuration, scope=tk.scope.every)
-    with open("token.cred", "wb") as file:
-        pickle.dump(token, file, pickle.HIGHEST_PROTOCOL)
+    token = tk.prompt_for_user_token(*conf, scope=tk.scope.every)
+    tk.config_to_file(File, conf + (token.refresh_token,))
 
 
-# function to modify time interval for check operation, right now its 
-# 180 seconds, but depending on your usecase, can be modified. 
+# function to modify time interval for check operation, right now its
+# 180 seconds, but depending on your usecase, can be modified.
 def countdown(t=TIME_INTERVAL) -> None:
     while t:
         mins, secs = divmod(t, 60)
@@ -46,8 +45,9 @@ def countdown(t=TIME_INTERVAL) -> None:
         t -= 1
     return
 
+
 # Takes data from spotify API and uses it to compose a string to be tweeted out
-# could have added other functionality but it works fine for now. 
+# could have added other functionality but it works fine for now.
 def generate_tweet() -> str:
     trk_artists = ""
     try:
@@ -72,7 +72,7 @@ def generate_tweet() -> str:
         print("No Song Playing")
 
 
-# Runs forever :), can operate on a headless server on a tmux instance and 
+# Runs forever :), can operate on a headless server on a tmux instance and
 # provides enough checking to carry itself.
 if __name__ == "__main__":
     message = generate_tweet()
